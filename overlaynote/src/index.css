@@ -1,0 +1,42 @@
+/* Reset & base */
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html, body, #root {
+  width: 100%;
+  height: 100%;
+  background: transparent;
+  overflow: hidden;
+  /* Hide the native OS cursor — we draw our own */
+  cursor: none;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+/* Scrollable note area gets cursor:none too */
+* {
+  cursor: none !important;
+}
+
+:root {
+  --bg: rgba(15, 15, 20, 0.92);
+  --border: rgba(255, 255, 255, 0.10);
+  --text: #e8e8ec;
+  --muted: rgba(232, 232, 236, 0.45);
+  --accent: #7c6af7;
+  --accent-glow: rgba(124, 106, 247, 0.35);
+  --radius: 14px;
+  --font: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+}
+
+/* Scrollbar inside note area */
+.note-area::-webkit-scrollbar {
+  width: 4px;
+}
+.note-area::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 4px;
+}
