@@ -316,6 +316,13 @@ pub fn run() {
         .setup(|app| {
             let handle = app.handle().clone();
 
+            // Hide dock icon on macOS
+            #[cfg(target_os = "macos")]
+            {
+                use tauri::ActivationPolicy;
+                app.set_activation_policy(ActivationPolicy::Accessory);
+            }
+
             // Default shortcuts
             // Alt+\ → toggle (hide/show)
             if let Err(e) = register_toggle(&handle, "Alt+Backslash") {

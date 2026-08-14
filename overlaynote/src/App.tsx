@@ -8,6 +8,7 @@ import {
 import { CustomCursor } from "./CustomCursor";
 import { Settings } from "./Settings";
 import { useMicSilence } from "./useMicSilence";
+import { matchesQuery } from "./transliterate";
 import "./App.css";
 
 export type Theme = "light" | "dark";
@@ -18,21 +19,17 @@ export default function App() {
   const [showSettings, setShowSettings] = useState(false);
   const [opacity, setOpacity]           = useState(1.0);
   const [theme, setTheme]               = useState<Theme>("light");
-  const inputRef    = useRef<HTMLInputElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const { silenced, toggle: toggleMic } = useMicSilence();
 
-  // Load settings from backend on mount
+  // Load settings on mount
   useEffect(() => {
-    invoke<number>("get_opacity").then(v => {
-      setOpacity(v);
-    }).catch(() => {});
-    // Persist theme in localStorage
+    invoke<number>("get_opacity").then(setOpacity).catch(() => {});
     const saved = localStorage.getItem("theme") as Theme | null;
     if (saved) setTheme(saved);
   }, []);
 
-  // Apply theme to document root
+  // Apply theme attribute so CSS variables switch
   useEffect(() => {
     document.documentElement.setAttribute("data-theme", theme);
     localStorage.setItem("theme", theme);
@@ -46,7 +43,6 @@ export default function App() {
     return () => window.removeEventListener("focus", onFocus);
   }, []);
 
-  // Listen for Rust "focus-input" event (emitted after show)
   useEffect(() => {
     const unsub = listen("focus-input", () => textareaRef.current?.focus());
     return () => { unsub.then(fn => fn()); };
@@ -57,20 +53,23 @@ export default function App() {
     invoke<number>("get_opacity").then(setOpacity).catch(() => {});
   }, []);
 
-  const handleThemeChange = useCallback((t: Theme) => {
-    setTheme(t);
-  }, []);
-
-  // Search filters note text line-by-line for highlighted display
-  const filteredLines = query.trim()
-    ? noteText.split("\n").filter(l =>
-        l.toLowerCase().includes(query.toLowerCase())
-      )
-    : null;
+  /**
+   * Split note into paragraphs (groups of non-blank lines separated by
+   * one or more blank lines). Filter paragraphs that contain the query
+   * using transliteration-aware matching.
+   */
+  const searchResults: string[] | null = (() => {
+    if (!query.trim()) return null;
+    const paragraphs = noteText
+      .split(/\n{2,}/)
+      .map(p => p.trim())
+      .filter(Boolean);
+    return paragraphs.filter(p => matchesQuery(p, query.trim()));
+  })();
 
   return (
     <div className="root" data-theme={theme} style={{ opacity }}>
-      <CustomCursor />
+      <CustomCursor theme={theme} />
 
       {/* ── Toolbar ── */}
       <div className="toolbar" data-tauri-drag-region>
@@ -85,7 +84,6 @@ export default function App() {
         <Search className="search-icon" size={13} />
 
         <input
-          ref={inputRef}
           className="search-input"
           placeholder="Search…"
           value={query}
@@ -126,16 +124,15 @@ export default function App() {
         </button>
       </div>
 
-      {/* ── Note area ── */}
+      {/* ── Note / search area ── */}
       <div className="note-area">
-        {filteredLines !== null ? (
-          // Search results: read-only list of matching lines
-          filteredLines.length === 0 ? (
+        {searchResults !== null ? (
+          searchResults.length === 0 ? (
             <p className="empty-hint">No matches</p>
           ) : (
             <div className="search-results">
-              {filteredLines.map((line, i) => (
-                <div key={i} className="result-line">{line}</div>
+              {searchResults.map((para, i) => (
+                <div key={i} className="result-para">{para}</div>
               ))}
             </div>
           )
@@ -143,7 +140,7 @@ export default function App() {
           <textarea
             ref={textareaRef}
             className="note-textarea"
-            placeholder="Start typing your notes…"
+            placeholder="Start typing… (blank line separates paragraphs for search)"
             value={noteText}
             onChange={e => setNoteText(e.target.value)}
             spellCheck={false}
@@ -159,7 +156,7 @@ export default function App() {
           opacity={opacity}
           onOpacityChange={setOpacity}
           theme={theme}
-          onThemeChange={handleThemeChange}
+          onThemeChange={setTheme}
         />
       )}
     </div>
