@@ -18,7 +18,7 @@ pub struct AppState {
 impl Default for AppState {
     fn default() -> Self {
         AppState {
-            opacity: Mutex::new(0.92),
+            opacity: Mutex::new(1.0),
             toggle_shortcut: Mutex::new("Alt+Backslash".into()),
             expand_shortcut: Mutex::new("CommandOrControl+Shift+E".into()),
         }
@@ -64,7 +64,7 @@ fn get_opacity(state: tauri::State<AppState>) -> f64 {
 
 #[tauri::command]
 fn set_opacity(state: tauri::State<AppState>, value: f64) {
-    *state.opacity.lock().unwrap() = value.clamp(0.1, 1.0);
+    *state.opacity.lock().unwrap() = value.clamp(0.0, 1.0);
 }
 
 #[tauri::command]
