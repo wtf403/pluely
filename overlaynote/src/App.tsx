@@ -1,8 +1,13 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { invoke } from "@tauri-apps/api/core";
-import { Search, SlidersHorizontal, X, ChevronDown, ChevronUp } from "lucide-react";
+import { listen } from "@tauri-apps/api/event";
+import {
+  Search, SlidersHorizontal, X, ChevronDown, ChevronUp,
+  GripVertical, Mic, MicOff,
+} from "lucide-react";
 import { CustomCursor } from "./CustomCursor";
 import { Settings } from "./Settings";
+import { useMicSilence } from "./useMicSilence";
 import "./App.css";
 
 interface Note {
@@ -12,100 +17,122 @@ interface Note {
 }
 
 export default function App() {
-  const [query, setQuery] = useState("");
-  const [notes, setNotes] = useState<Note[]>([]);
-  const [expanded, setExpanded] = useState(false);
+  const [query, setQuery]         = useState("");
+  const [notes, setNotes]         = useState<Note[]>([]);
+  const [expanded, setExpanded]   = useState(false);
   const [showSettings, setShowSettings] = useState(false);
-  const [opacity, setOpacity] = useState(0.92);
-  const inputRef = useRef<HTMLInputElement>(null);
-  const nextId = useRef(1);
+  const [opacity, setOpacity]     = useState(0.92);
+  const inputRef   = useRef<HTMLInputElement>(null);
+  const nextId     = useRef(1);
+  const { silenced, toggle: toggleMic } = useMicSilence();
 
   // Load opacity from backend
   useEffect(() => {
-    invoke<number>("get_opacity")
-      .then(setOpacity)
-      .catch(() => {});
+    invoke<number>("get_opacity").then(setOpacity).catch(() => {});
   }, []);
 
-  // Re-sync opacity whenever settings close
-  const handleSettingsClose = useCallback(() => {
-    setShowSettings(false);
-    invoke<number>("get_opacity")
-      .then(setOpacity)
-      .catch(() => {});
-  }, []);
-
-  // Focus input on mount
-  useEffect(() => {
-    inputRef.current?.focus();
-  }, []);
-
-  // Auto-focus input when window gains focus
+  // Focus input on mount and on window focus
+  useEffect(() => { inputRef.current?.focus(); }, []);
   useEffect(() => {
     const onFocus = () => inputRef.current?.focus();
     window.addEventListener("focus", onFocus);
     return () => window.removeEventListener("focus", onFocus);
   }, []);
 
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === "Enter" && query.trim()) {
-      // Save note
-      const note: Note = { id: nextId.current++, text: query.trim(), ts: Date.now() };
-      setNotes((prev) => [note, ...prev]);
-      setQuery("");
-      if (!expanded) toggleExpand();
-    }
-    if (e.key === "Escape") {
-      setQuery("");
-    }
-  };
+  // Listen for Rust "focus-input" event (emitted after show)
+  useEffect(() => {
+    const unsub = listen("focus-input", () => inputRef.current?.focus());
+    return () => { unsub.then(fn => fn()); };
+  }, []);
 
-  const toggleExpand = () => {
+  // keyboard: Enter = save note, Escape = clear
+  const handleKeyDown = useCallback((e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Enter" && query.trim()) {
+      const note: Note = { id: nextId.current++, text: query.trim(), ts: Date.now() };
+      setNotes(prev => [note, ...prev]);
+      setQuery("");
+      if (!expanded) {
+        setExpanded(true);
+        invoke("set_window_expanded", { expanded: true }).catch(() => {});
+      }
+    }
+    if (e.key === "Escape") setQuery("");
+  }, [query, expanded]);
+
+  const toggleExpand = useCallback(() => {
     const next = !expanded;
     setExpanded(next);
     invoke("set_window_expanded", { expanded: next }).catch(() => {});
-  };
+  }, [expanded]);
 
-  const deleteNote = (id: number) => {
-    setNotes((prev) => prev.filter((n) => n.id !== id));
-  };
+  const deleteNote = useCallback((id: number) => {
+    setNotes(prev => prev.filter(n => n.id !== id));
+  }, []);
+
+  const handleSettingsClose = useCallback(() => {
+    setShowSettings(false);
+    invoke<number>("get_opacity").then(setOpacity).catch(() => {});
+  }, []);
 
   const filtered = query
-    ? notes.filter((n) => n.text.toLowerCase().includes(query.toLowerCase()))
+    ? notes.filter(n => n.text.toLowerCase().includes(query.toLowerCase()))
     : notes;
 
   return (
     <div className="root" style={{ "--opacity": opacity } as React.CSSProperties}>
       <CustomCursor />
 
-      {/* Drag bar at the very top */}
+      {/* Transparent drag strip at very top */}
       <div className="drag-bar" data-tauri-drag-region />
 
-      {/* Search bar row */}
+      {/* ── Search / toolbar row ── */}
       <div className="search-row">
-        <Search className="search-icon" size={15} />
+        {/* Drag handle — same pattern as Pluely's DragButton */}
+        <button
+          className="icon-btn drag-handle"
+          data-tauri-drag-region
+          title="Drag to move"
+          style={{ cursor: "none" }}
+        >
+          <GripVertical size={14} />
+        </button>
+
+        <Search className="search-icon" size={14} />
+
         <input
           ref={inputRef}
           className="search-input"
           placeholder="Search or type a note… (Enter to save)"
           value={query}
-          onChange={(e) => setQuery(e.target.value)}
+          onChange={e => setQuery(e.target.value)}
           onKeyDown={handleKeyDown}
           spellCheck={false}
           autoComplete="off"
         />
+
         {query && (
-          <button className="icon-btn" onClick={() => setQuery("")} title="Clear">
-            <X size={13} />
+          <button className="icon-btn" onClick={() => setQuery("")} title="Clear (Esc)">
+            <X size={12} />
           </button>
         )}
+
+        {/* Mic silence button */}
         <button
-          className="icon-btn"
-          onClick={() => setShowSettings((s) => !s)}
+          className={`icon-btn${silenced ? " icon-btn--active" : ""}`}
+          onClick={toggleMic}
+          title={silenced ? "Mic silenced — click to restore" : "Silence mic"}
+        >
+          {silenced ? <MicOff size={14} /> : <Mic size={14} />}
+        </button>
+
+        <button
+          className={`icon-btn${showSettings ? " icon-btn--active" : ""}`}
+          onClick={() => setShowSettings(s => !s)}
           title="Settings"
         >
           <SlidersHorizontal size={14} />
         </button>
+
         <button
           className="icon-btn"
           onClick={toggleExpand}
@@ -115,17 +142,17 @@ export default function App() {
         </button>
       </div>
 
-      {/* Notes list — only visible when expanded */}
+      {/* ── Notes list ── */}
       {expanded && (
         <div className="notes-area">
           {filtered.length === 0 ? (
             <p className="empty-hint">
               {notes.length === 0
-                ? "Type and press Enter to add a note"
-                : "No notes match"}
+                ? "Type something and press Enter to save a note"
+                : "No notes match your search"}
             </p>
           ) : (
-            filtered.map((note) => (
+            filtered.map(note => (
               <div key={note.id} className="note-item">
                 <span className="note-text">{note.text}</span>
                 <button
@@ -141,8 +168,21 @@ export default function App() {
         </div>
       )}
 
-      {/* Settings overlay */}
-      {showSettings && <Settings onClose={handleSettingsClose} />}
+      {/* ── Settings overlay ── */}
+      {showSettings && (
+        <Settings
+          onClose={handleSettingsClose}
+          opacity={opacity}
+          onOpacityChange={setOpacity}
+        />
+      )}
+
+      {/* Silenced indicator pill */}
+      {silenced && (
+        <div className="mic-badge" title="Microphone silenced">
+          <MicOff size={10} /> silent
+        </div>
+      )}
     </div>
   );
 }
