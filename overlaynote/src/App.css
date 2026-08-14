@@ -4,11 +4,12 @@ html, body, #root {
   width: 100%; height: 100%;
   background: transparent;
   overflow: hidden;
+  cursor: default !important;
   user-select: none;
   -webkit-user-select: none;
 }
 
-/* Virtual cursor — use default arrow, never text/pointer */
+/* Virtual cursor — keep default arrow always visible */
 * { cursor: default !important; }
 input, textarea { user-select: text !important; -webkit-user-select: text !important; }
 

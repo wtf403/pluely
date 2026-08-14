@@ -321,6 +321,11 @@ fn setup_nspanel(win: &tauri::WebviewWindow) {
     use tauri_nspanel::WebviewWindowExt;
     use tauri_nspanel::cocoa::appkit::NSWindowCollectionBehavior;
     if let Ok(panel) = win.to_panel() {
+        // Non-activating: overlay never steals focus from the active app
+        #[allow(non_upper_case_globals)]
+        const NSWindowStyleMaskNonActivatingPanel: i32 = 1 << 7;
+        panel.set_style_mask(NSWindowStyleMaskNonActivatingPanel);
+
         #[allow(deprecated)]
         panel.set_collection_behaviour(
             NSWindowCollectionBehavior::NSWindowCollectionBehaviorCanJoinAllSpaces
