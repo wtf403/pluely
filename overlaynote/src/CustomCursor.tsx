@@ -1,7 +1,7 @@
 import { useEffect, useRef } from "react";
 import { MousePointer2 } from "lucide-react";
 
-/** Mirrors Pluely's CustomCursor exactly — native cursor hidden via CSS,
+/** Mirrors Builder's CustomCursor exactly — native cursor hidden via CSS,
  *  this SVG pointer tracks mousemove via rAF so it never disappears. */
 export function CustomCursor() {
   const cursorRef = useRef<HTMLDivElement>(null);
@@ -34,7 +34,7 @@ export function CustomCursor() {
 
     const onBlur = () => {
       // keep cursor visible even when window loses focus
-      // (mirrors Pluely behaviour — cursor stays rendered)
+      // (mirrors Builder behaviour — cursor stays rendered)
     };
 
     rafId = requestAnimationFrame(loop);

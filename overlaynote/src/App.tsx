@@ -3,7 +3,7 @@ import { invoke } from "@tauri-apps/api/core";
 import { listen } from "@tauri-apps/api/event";
 import {
   Search, SlidersHorizontal, X, ChevronDown, ChevronUp,
-  GripVertical, Mic, MicOff,
+  GripVertical, Mic, MicOff, EyeOff,
 } from "lucide-react";
 import { CustomCursor } from "./CustomCursor";
 import { Settings } from "./Settings";
@@ -87,7 +87,7 @@ export default function App() {
 
       {/* ── Search / toolbar row ── */}
       <div className="search-row">
-        {/* Drag handle — same pattern as Pluely's DragButton */}
+        {/* Drag handle — same pattern as Builder's DragButton */}
         <button
           className="icon-btn drag-handle"
           data-tauri-drag-region
@@ -131,6 +131,14 @@ export default function App() {
           title="Settings"
         >
           <SlidersHorizontal size={14} />
+        </button>
+
+        <button
+          className="icon-btn"
+          onClick={() => invoke("toggle_window")}
+          title="Hide (Alt+\)"
+        >
+          <EyeOff size={14} />
         </button>
 
         <button
