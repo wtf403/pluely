@@ -112,7 +112,7 @@ export function Settings({ onClose, opacity, onOpacityChange, theme, onThemeChan
               type="range" min={0.1} max={1} step={0.01}
               value={opacity}
               onChange={e => handleOpacity(parseFloat(e.target.value))}
-              style={{ flex: 1, accentColor: "#7c6af7", cursor: "pointer" }}
+              style={{ flex: 1, accentColor: "#7c6af7" }}
             />
             <span style={badgeStyle(isDark)}>{Math.round(opacity * 100)}%</span>
           </div>

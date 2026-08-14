@@ -8,9 +8,9 @@ html, body, #root {
   -webkit-user-select: none;
 }
 
-/* Hide native cursor everywhere except editable fields */
+/* Hide native cursor everywhere — virtual cursor handles all states */
 * { cursor: none !important; }
-input, textarea { cursor: text !important; user-select: text !important; -webkit-user-select: text !important; }
+input, textarea { user-select: text !important; -webkit-user-select: text !important; }
 
 /* ── Light theme (default) ── */
 :root,
@@ -76,7 +76,6 @@ input, textarea { cursor: text !important; user-select: text !important; -webkit
   flex: 1; background: none; border: none; outline: none;
   color: var(--text); font-size: 13px; font-family: inherit;
   caret-color: var(--accent); min-width: 0;
-  cursor: text !important;
 }
 .search-input::placeholder { color: var(--placeholder); }
 
@@ -118,7 +117,6 @@ input, textarea { cursor: text !important; user-select: text !important; -webkit
   overflow-y: auto;
   scrollbar-width: thin;
   scrollbar-color: var(--scrollbar) transparent;
-  cursor: text !important;
   user-select: text !important;
   -webkit-user-select: text !important;
 }
