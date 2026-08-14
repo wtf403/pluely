@@ -3,7 +3,7 @@ import { invoke } from "@tauri-apps/api/core";
 import { listen } from "@tauri-apps/api/event";
 import {
   Search, SlidersHorizontal, X,
-  GripVertical, Mic, MicOff, EyeOff,
+  GripVertical, Mic, MicOff, EyeOff, Zap,
 } from "lucide-react";
 import { CustomCursor } from "./CustomCursor";
 import { Settings } from "./Settings";
@@ -19,6 +19,7 @@ export default function App() {
   const [showSettings, setShowSettings] = useState(false);
   const [opacity, setOpacity]           = useState(1.0);
   const [theme, setTheme]               = useState<Theme>("light");
+  const [fuzzySearch, setFuzzySearch]   = useState(true);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const searchRef   = useRef<HTMLInputElement>(null);
   const { silenced, toggle: toggleMic } = useMicSilence();
@@ -68,7 +69,7 @@ export default function App() {
       .split(/\n{2,}/)
       .map(p => p.trim())
       .filter(Boolean);
-    return paragraphs.filter(p => matchesQuery(p, query.trim()));
+    return paragraphs.filter(p => matchesQuery(p, query.trim(), fuzzySearch));
   })();
 
   return (
@@ -103,6 +104,14 @@ export default function App() {
             <X size={12} />
           </button>
         )}
+
+        <button
+          className={`icon-btn${fuzzySearch ? " icon-btn--active" : ""}`}
+          onClick={() => setFuzzySearch(f => !f)}
+          title={fuzzySearch ? "Fuzzy search (on)" : "Exact search (off)"}
+        >
+          <Zap size={14} />
+        </button>
 
         <button
           className={`icon-btn${silenced ? " mic-on" : ""}`}

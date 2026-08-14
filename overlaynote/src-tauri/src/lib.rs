@@ -348,6 +348,7 @@ pub fn run() {
         .manage(RegisteredShortcuts::default())
         .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_global_shortcut::Builder::new().build())
+        .plugin(tauri_plugin_process::init())
         .invoke_handler(tauri::generate_handler![
             get_opacity,
             set_opacity,

@@ -39,20 +39,21 @@ function fuzzyMatch(text: string, query: string): boolean {
 }
 
 /**
- * Returns true if `text` fuzzy-matches `query` under any of:
- *  - direct fuzzy match
- *  - query transliterated EN→RU then fuzzy matched
- *  - query transliterated RU→EN then fuzzy matched
- *  - text transliterated, then direct query fuzzy matched
+ * Returns true if `text` matches `query` under any transliteration variant.
+ * If fuzzy is true, uses fuzzy matching (characters in order, not contiguous).
+ * If fuzzy is false, uses exact substring matching.
  */
-export function matchesQuery(text: string, query: string): boolean {
+export function matchesQuery(text: string, query: string, fuzzy = true): boolean {
   if (!query) return true;
   const t = text.toLowerCase();
   const q = query.toLowerCase();
-  if (fuzzyMatch(t, q)) return true;
-  if (fuzzyMatch(t, transliterate(q, EN_TO_RU))) return true;
-  if (fuzzyMatch(t, transliterate(q, RU_TO_EN))) return true;
-  if (fuzzyMatch(transliterate(t, RU_TO_EN), q)) return true;
-  if (fuzzyMatch(transliterate(t, EN_TO_RU), q)) return true;
+
+  const matcher = fuzzy ? fuzzyMatch : (txt: string, qry: string) => txt.includes(qry);
+
+  if (matcher(t, q)) return true;
+  if (matcher(t, transliterate(q, EN_TO_RU))) return true;
+  if (matcher(t, transliterate(q, RU_TO_EN))) return true;
+  if (matcher(transliterate(t, RU_TO_EN), q)) return true;
+  if (matcher(transliterate(t, EN_TO_RU), q)) return true;
   return false;
 }

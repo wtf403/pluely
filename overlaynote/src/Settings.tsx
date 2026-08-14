@@ -1,7 +1,8 @@
 import { useState, useEffect, useCallback } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import { listen } from "@tauri-apps/api/event";
-import { X, Keyboard, Eye, GripVertical, SlidersHorizontal, Sun, Moon } from "lucide-react";
+import { exit } from "@tauri-apps/plugin-process";
+import { X, Keyboard, Eye, GripVertical, SlidersHorizontal, Sun, Moon, Power } from "lucide-react";
 import type { Theme } from "./App";
 
 interface Props {
@@ -148,6 +149,24 @@ export function Settings({ onClose, opacity, onOpacityChange, theme, onThemeChan
             Resize from edges. <kbd style={kbdStyle(isDark)}>Alt+↑↓←→</kbd> to nudge.
           </p>
         </Section>
+
+        {/* Quit */}
+        <button
+          onClick={() => exit(0)}
+          style={{
+            display: "flex", alignItems: "center", justifyContent: "center", gap: 6,
+            padding: "8px 12px", borderRadius: 8, fontSize: 12,
+            background: isDark ? "rgba(248,113,113,0.12)" : "rgba(239,68,68,0.1)",
+            border: `1px solid ${isDark ? "rgba(248,113,113,0.25)" : "rgba(239,68,68,0.2)"}`,
+            color: isDark ? "#fca5a5" : "#dc2626",
+            fontWeight: 500,
+            transition: "all 0.15s",
+          }}
+          title="Quit OverlayNote"
+        >
+          <Power size={13} />
+          Quit OverlayNote
+        </button>
 
         {status && (
           <p style={{
