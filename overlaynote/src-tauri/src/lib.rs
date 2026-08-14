@@ -122,7 +122,35 @@ fn update_shortcut(
     match action.as_str() {
         "toggle" => {
             register_toggle(&app, &shortcut)?;
-            *state.toggle_shortcut.lock().unwrap() = shortcut;
+            *state.toggle_shortcut.lock().unwrap() = shortcut.clone();
+
+            // Re-register move arrows with the same modifier prefix.
+            // e.g. "Alt+Backslash" → modifier = "Alt"
+            //      "F9"            → no modifier, use bare arrow keys
+            //      "Ctrl+Shift+T"  → modifier = "Ctrl+Shift"
+            let parts: Vec<&str> = shortcut.split('+').collect();
+            let move_modifier = if parts.len() > 1 {
+                // everything except the last token is the modifier
+                parts[..parts.len() - 1].join("+")
+            } else {
+                String::new()
+            };
+
+            // Unregister old move shortcuts
+            {
+                let mut reg = registered.shortcuts.lock().unwrap();
+                for dir in ["up", "down", "left", "right"] {
+                    let key = format!("move_{}", dir);
+                    if let Some(old) = reg.remove(&key) {
+                        if let Ok(sc) = old.parse::<Shortcut>() {
+                            let _ = app.global_shortcut().unregister(sc);
+                        }
+                    }
+                }
+            }
+
+            // Register new move shortcuts
+            register_move_arrows_with_modifier(&app, &move_modifier, &registered)?;
         }
         "expand" => {
             register_expand(&app, &shortcut)?;
@@ -250,8 +278,24 @@ fn register_expand(app: &AppHandle, key: &str) -> Result<(), String> {
 }
 
 fn register_move_arrows(app: &AppHandle, modifier: &str) -> Result<(), String> {
+    let registered = app.state::<RegisteredShortcuts>();
+    register_move_arrows_with_modifier(app, modifier, &registered)
+}
+
+/// Register arrow-key movement shortcuts with a given modifier prefix.
+/// If modifier is empty, uses bare arrow keys (Up/Down/Left/Right).
+fn register_move_arrows_with_modifier(
+    app: &AppHandle,
+    modifier: &str,
+    registered: &tauri::State<RegisteredShortcuts>,
+) -> Result<(), String> {
     for dir in ["up", "down", "left", "right"] {
-        let combo = format!("{}+{}", modifier, dir);
+        let arrow = match dir { "up" => "Up", "down" => "Down", "left" => "Left", _ => "Right" };
+        let combo = if modifier.is_empty() {
+            arrow.to_string()
+        } else {
+            format!("{}+{}", modifier, arrow)
+        };
         let sc: Shortcut = combo.parse().map_err(|_| format!("Invalid shortcut: {}", combo))?;
         let h = app.clone();
         let dir_owned = dir.to_string();
@@ -261,6 +305,9 @@ fn register_move_arrows(app: &AppHandle, modifier: &str) -> Result<(), String> {
                 ShortcutState::Released => stop_move(&h, &dir_owned),
             })
             .map_err(|e| e.to_string())?;
+        // Track registered shortcut for later unregistration
+        registered.shortcuts.lock().unwrap()
+            .insert(format!("move_{}", dir), combo);
     }
     Ok(())
 }

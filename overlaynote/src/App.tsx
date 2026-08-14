@@ -20,6 +20,7 @@ export default function App() {
   const [opacity, setOpacity]           = useState(1.0);
   const [theme, setTheme]               = useState<Theme>("light");
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const searchRef   = useRef<HTMLInputElement>(null);
   const { silenced, toggle: toggleMic } = useMicSilence();
 
   // Load settings on mount
@@ -35,16 +36,19 @@ export default function App() {
     localStorage.setItem("theme", theme);
   }, [theme]);
 
-  // Focus textarea on mount and window focus
-  useEffect(() => { textareaRef.current?.focus(); }, []);
+  // Focus search on mount and window focus/show
+  useEffect(() => { searchRef.current?.focus(); }, []);
   useEffect(() => {
-    const onFocus = () => textareaRef.current?.focus();
+    const onFocus = () => searchRef.current?.focus();
     window.addEventListener("focus", onFocus);
     return () => window.removeEventListener("focus", onFocus);
   }, []);
 
   useEffect(() => {
-    const unsub = listen("focus-input", () => textareaRef.current?.focus());
+    const unsub = listen("focus-input", () => {
+      searchRef.current?.focus();
+      searchRef.current?.select();
+    });
     return () => { unsub.then(fn => fn()); };
   }, []);
 
@@ -84,6 +88,7 @@ export default function App() {
         <Search className="search-icon" size={13} />
 
         <input
+          ref={searchRef}
           className="search-input"
           placeholder="Search…"
           value={query}
