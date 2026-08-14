@@ -58,32 +58,32 @@ impl Default for RegisteredShortcuts {
 // ---------------------------------------------------------------------------
 
 #[tauri::command]
-fn get_opacity(state: tauri::State<AppState>) -> f64 {
+pub fn get_opacity(state: tauri::State<AppState>) -> f64 {
     *state.opacity.lock().unwrap()
 }
 
 #[tauri::command]
-fn set_opacity(state: tauri::State<AppState>, value: f64) {
+pub fn set_opacity(state: tauri::State<AppState>, value: f64) {
     *state.opacity.lock().unwrap() = value.clamp(0.1, 1.0);
 }
 
 #[tauri::command]
-fn get_toggle_shortcut(state: tauri::State<AppState>) -> String {
+pub fn get_toggle_shortcut(state: tauri::State<AppState>) -> String {
     state.toggle_shortcut.lock().unwrap().clone()
 }
 
 #[tauri::command]
-fn get_expand_shortcut(state: tauri::State<AppState>) -> String {
+pub fn get_expand_shortcut(state: tauri::State<AppState>) -> String {
     state.expand_shortcut.lock().unwrap().clone()
 }
 
 #[tauri::command]
-fn toggle_window(app: AppHandle) {
+pub fn toggle_window(app: AppHandle) {
     do_toggle(&app);
 }
 
 #[tauri::command]
-fn set_window_expanded(app: AppHandle, expanded: bool) {
+pub fn set_window_expanded(app: AppHandle, expanded: bool) {
     if let Some(win) = app.get_webview_window("main") {
         let height: f64 = if expanded { 420.0 } else { 56.0 };
         let _ = win.set_size(tauri::Size::Logical(tauri::LogicalSize {
@@ -94,13 +94,13 @@ fn set_window_expanded(app: AppHandle, expanded: bool) {
 }
 
 #[tauri::command]
-fn move_window(app: AppHandle, direction: String, step: i32) -> Result<(), String> {
+pub fn move_window(app: AppHandle, direction: String, step: i32) -> Result<(), String> {
     do_move_window(&app, &direction, step);
     Ok(())
 }
 
 #[tauri::command]
-fn update_shortcut(
+pub fn update_shortcut(
     app: AppHandle,
     state: tauri::State<AppState>,
     registered: tauri::State<RegisteredShortcuts>,
