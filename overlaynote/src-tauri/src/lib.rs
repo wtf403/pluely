@@ -19,7 +19,7 @@ impl Default for AppState {
     fn default() -> Self {
         AppState {
             opacity: Mutex::new(1.0),
-            toggle_shortcut: Mutex::new("Alt+Backslash".into()),
+            toggle_shortcut: Mutex::new("Backquote".into()),
             expand_shortcut: Mutex::new("CommandOrControl+Shift+E".into()),
         }
     }
@@ -377,8 +377,8 @@ pub fn run() {
             }
 
             // Default shortcuts
-            // Alt+\ → toggle (hide/show)
-            if let Err(e) = register_toggle(&handle, "Alt+Backslash") {
+            // ` → toggle (hide/show)
+            if let Err(e) = register_toggle(&handle, "Backquote") {
                 eprintln!("toggle shortcut: {}", e);
             }
             // Ctrl/Cmd+Shift+E → expand

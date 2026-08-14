@@ -9,13 +9,14 @@ import { CustomCursor } from "./CustomCursor";
 import { Settings } from "./Settings";
 import { useMicSilence } from "./useMicSilence";
 import { matchesQuery } from "./transliterate";
+import questionsDefault from "./questions.md?raw";
 import "./App.css";
 
 export type Theme = "light" | "dark";
 
 export default function App() {
   const [query, setQuery]               = useState("");
-  const [noteText, setNoteText]         = useState("");
+  const [noteText, setNoteText]         = useState(() => localStorage.getItem("noteText") ?? questionsDefault);
   const [showSettings, setShowSettings] = useState(false);
   const [opacity, setOpacity]           = useState(1.0);
   const [theme, setTheme]               = useState<Theme>("light");
@@ -36,6 +37,11 @@ export default function App() {
     document.documentElement.setAttribute("data-theme", theme);
     localStorage.setItem("theme", theme);
   }, [theme]);
+
+  // Persist note text
+  useEffect(() => {
+    localStorage.setItem("noteText", noteText);
+  }, [noteText]);
 
   // Focus search on mount and window focus/show
   useEffect(() => { searchRef.current?.focus(); }, []);

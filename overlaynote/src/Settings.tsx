@@ -32,7 +32,7 @@ function buildShortcut(e: KeyboardEvent): string | null {
 }
 
 export function Settings({ onClose, opacity, onOpacityChange, theme, onThemeChange }: Props) {
-  const [toggleSC, setToggleSC]     = useState("Alt+Backslash");
+  const [toggleSC, setToggleSC]     = useState("Backquote");
   const [recording, setRecording]   = useState<Action | null>(null);
   const [status, setStatus]         = useState("");
 
